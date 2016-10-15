@@ -5,7 +5,9 @@
   "main": "app.js",
   "dependencies": {
     "botbuilder": "^3.3.0",
-    "restify": "^4.1.1"
+    "request": "^2.75.0",
+    "restify": "^4.1.1",
+    "sha256": "^0.2.0"
   },
   "devDependencies": {},
   "scripts": {
