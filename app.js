@@ -88,18 +88,11 @@ bot.beginDialogAction('help', '/help', {
 bot.dialog('/', [
     function(session) {
         // Send a greeting and show help.
-        var card = new builder.HeroCard(session)
-            .title("Hi, I'm Tony");
-        var msg = new builder.Message(session).attachments([card]);
-        session.send(msg);
-        builder.Prompts.choice(session, "What you like something to eat?", "sure|no");
+        session.send("Hi, I'm Tony");
+        builder.Prompts.confirm(session, "Would you like to eat something?");
     },
     function(session, results) {
-        if (result === 'sure') {
-            session.send("On my way");
-        } else {
-            session.send("NONO");
-        }
+        console.log(results);
         session.beginDialog('/menu');
     },
     function(session, results) {
