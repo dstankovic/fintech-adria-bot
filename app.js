@@ -89,7 +89,7 @@ bot.dialog('/', [
     function(session) {
         // Send a greeting and show help.
         var card = new builder.HeroCard(session)
-            .title("Hi, I'm Tony").
+            .title("Hi, I'm Tony");
         var msg = new builder.Message(session).attachments([card]);
         session.send(msg);
         builder.Prompts.choice(session, "What you like something to eat?", "sure|no");
