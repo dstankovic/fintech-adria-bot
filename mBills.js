@@ -6,11 +6,12 @@ var secretKey = '1'
 
 var username = `03ec7443-071c-4668-b310-c3b81e78d0eb.12345678.${Math.floor(new Date() / 1000)}`;
 var password = sha256(username + secretKey + requestURL);
+var token = "";
 
 console.log(username);
 console.log(password);
 
-var pay = function(amount) {
+var pay = function(amount, callback) {
 
   request({
     method: 'POST',
@@ -33,7 +34,9 @@ var pay = function(amount) {
     console.log('Headers:', JSON.stringify(response.headers));
     console.log('Response:', body);
 
-    return response, body;
+    token = JSON.parse(body).paymenttokennumber;
+
+    callback(token);
   });
 
 };
@@ -42,6 +45,13 @@ var invoice = function() {
 
 }
 
+var contactMommaURL = function() {
+  return `mbillsdemo://www.mbills.si/dl/?type=1&token=${token}`;
+}
+
 module.exports = {
-  pay: pay
+  pay: pay,
+  invoice: invoice,
+  contactMommaURL: contactMommaURL,
+  token: function() { return token; }
 };
