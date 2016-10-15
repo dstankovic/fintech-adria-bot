@@ -42,8 +42,6 @@ var invoice = function() {
 
 }
 
-result = pay(100);
-
-console.log(result);
-
-module.export = pay
+module.exports = {
+  pay: pay
+};
