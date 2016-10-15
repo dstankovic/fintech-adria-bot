@@ -89,10 +89,14 @@ bot.dialog('/', [
     function(session) {
         // Send a greeting and show help.
         session.send("Hi, I'm Tony");
-        builder.Prompts.choice(session, "Would you like to eat something?");
+        builder.Prompts.confirm(session, "Would you like to eat something?");
     },
     function(session,results){
-        console.log(results);
+        if(results.response){
+            session.send("Holla");
+        } else{
+            session.send("bye");
+        }
     },
     function(session, results) {
         // Always say goodbye
