@@ -36,7 +36,7 @@ var pay = function(amount, callback) {
 
     token = JSON.parse(body).paymenttokennumber;
 
-    callback(token);
+    callback('mbillsdemo://www.mbills.si/dl/?type=1&token=${token}');
   });
 
 };
@@ -45,13 +45,9 @@ var invoice = function() {
 
 }
 
-var contactMommaURL = function() {
-  return `mbillsdemo://www.mbills.si/dl/?type=1&token=${token}`;
-}
 
 module.exports = {
   pay: pay,
   invoice: invoice,
-  contactMommaURL: contactMommaURL,
   token: function() { return token; }
 };

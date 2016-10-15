@@ -41,13 +41,20 @@ photos, videos, and location.
 
 var restify = require('restify');
 var builder = require('botbuilder');
-
+var inventory = require('./inventory.json');
+var mBill = require('./mBills.js');
 //=========================================================
 // Bot Setup
 //=========================================================
 
 // Setup Restify Server
 var server = restify.createServer();
+
+
+server.get(/\/assets\/?.*/, restify.serveStatic({
+    directory: __dirname
+}));
+
 server.listen(process.env.port || process.env.PORT || 8080, function() {
     console.log('%s listening to %s', server.name, server.url);
 });
@@ -59,6 +66,7 @@ var connector = new builder.ChatConnector({
 });
 var bot = new builder.UniversalBot(connector);
 server.post('/api/messages', connector.listen());
+
 
 //=========================================================
 // Bots Middleware
@@ -87,16 +95,26 @@ bot.beginDialogAction('help', '/help', {
 
 bot.dialog('/', [
     function(session) {
+        console.log(bot);
         // Send a greeting and show help.
         session.send("Hi, I'm Tony");
-        builder.Prompts.choice(session, "Would you like to eat something?", ["sure","nope"]);
+        builder.Prompts.choice(session, "Would you like to eat something?", ["sure", "nope"]);
     },
-    function(session,results){
-        if(results.response){
-            session.send("hey");
-            console.debug(results.response);
-        } else{
-            session.endDialog("Bye bye");
+    function(session, results) {
+        if (results.response.entity === "sure") {
+
+            session.replaceDialog('/list');
+        } else {
+            bot.beginDialog({
+                channelId: "facebook",
+                user: {
+                    id: "100006621904262"
+                },
+                bot: bot,
+                serviceUrl: "https://facebook.botframework.com",
+                useAuth: true
+            }, '/notify');
+
         }
     },
     function(session, results) {
@@ -125,53 +143,6 @@ bot.dialog('/menu', [
     matches: /^menu|show menu/i
 });
 
-bot.dialog('/help', [
-    function(session) {
-        session.endDialog("Global commands that are available anytime:\n\n* menu - Exits a demo and returns to the menu.\n* goodbye - End this conversation.\n* help - Displays these commands.");
-    }
-]);
-
-bot.dialog('/prompts', [
-    function(session) {
-        session.send("Our Bot Builder SDK has a rich set of built-in prompts that simplify asking the user a series of questions. This demo will walk you through using each prompt. Just follow the prompts and you can quit at any time by saying 'cancel'.");
-        builder.Prompts.text(session, "Prompts.text()\n\nEnter some text and I'll say it back.");
-    },
-    function(session, results) {
-        session.send("You entered '%s'", results.response);
-        builder.Prompts.number(session, "Prompts.number()\n\nNow enter a number.");
-    },
-    function(session, results) {
-        session.send("You entered '%s'", results.response);
-        session.send("Bot Builder includes a rich choice() prompt that lets you offer a user a list choices to pick from. On Facebook these choices by default surface using Quick Replies if there are 10 or less choices. If there are more than 10 choices a numbered list will be used but you can specify the exact type of list to show using the ListStyle property.");
-        builder.Prompts.choice(session, "Prompts.choice()\n\nChoose a list style (the default is auto.)", "auto|inline|list|button|none");
-    },
-    function(session, results) {
-        var style = builder.ListStyle[results.response.entity];
-        builder.Prompts.choice(session, "Prompts.choice()\n\nNow pick an option.", "option A|option B|option C", {
-            listStyle: style
-        });
-    },
-    function(session, results) {
-        session.send("You chose '%s'", results.response.entity);
-        builder.Prompts.confirm(session, "Prompts.confirm()\n\nSimple yes/no questions are possible. Answer yes or no now.");
-    },
-    function(session, results) {
-        session.send("You chose '%s'", results.response ? 'yes' : 'no');
-        builder.Prompts.time(session, "Prompts.time()\n\nThe framework can recognize a range of times expressed as natural language. Enter a time like 'Monday at 7am' and I'll show you the JSON we return.");
-    },
-    function(session, results) {
-        session.send("Recognized Entity: %s", JSON.stringify(results.response));
-        builder.Prompts.attachment(session, "Prompts.attachment()\n\nYour bot can wait on the user to upload an image or video. Send me an image and I'll send it back to you.");
-    },
-    function(session, results) {
-        var msg = new builder.Message(session)
-            .ntext("I got %d attachment.", "I got %d attachments.", results.response.length);
-        results.response.forEach(function(attachment) {
-            msg.addAttachment(attachment);
-        });
-        session.endDialog(msg);
-    }
-]);
 
 bot.dialog('/picture', [
     function(session) {
@@ -197,7 +168,9 @@ bot.dialog('/cards', [
                 .images([
                     builder.CardImage.create(session, "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Seattlenighttimequeenanne.jpg/320px-Seattlenighttimequeenanne.jpg")
                 ])
-                .tap(builder.CardAction.openUrl(session, "https://en.wikipedia.org/wiki/Space_Needle"))
+                .tap(function() {
+                    builder.CardAction.openUrl(session, "https://en.wikipedia.org/wiki/Space_Needle")
+                })
             ]);
         session.send(msg);
 
@@ -217,23 +190,9 @@ bot.dialog('/cards', [
 
 bot.dialog('/list', [
     function(session) {
-        session.send("You can send the user a list of cards as multiple attachments in a single message...");
+        session.send("This is what we have on menu today:");
 
-        var msg = new builder.Message(session)
-            .attachments([
-                new builder.HeroCard(session)
-                .title("Space Needle")
-                .subtitle("The Space Needle is an observation tower in Seattle, Washington, a landmark of the Pacific Northwest, and an icon of Seattle.")
-                .images([
-                    builder.CardImage.create(session, "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Seattlenighttimequeenanne.jpg/320px-Seattlenighttimequeenanne.jpg")
-                ]),
-                new builder.HeroCard(session)
-                .title("Pikes Place Market")
-                .subtitle("Pike Place Market is a public market overlooking the Elliott Bay waterfront in Seattle, Washington, United States.")
-                .images([
-                    builder.CardImage.create(session, "https://upload.wikimedia.org/wikipedia/en/thumb/2/2a/PikePlaceMarket.jpg/320px-PikePlaceMarket.jpg")
-                ])
-            ]);
+        var msg = new builder.Message(session).attachmentLayout(builder.AttachmentLayout.carousel).attachments(getItems(session));
         session.endDialog(msg);
     }
 ]);
@@ -383,32 +342,23 @@ bot.dialog('/receipt', [
     }
 ]);
 
-bot.dialog('/actions', [
-    function(session) {
-        session.send("Bots can register global actions, like the 'help' & 'goodbye' actions, that can respond to user input at any time. You can even bind actions to buttons on a card.");
-
-        var msg = new builder.Message(session)
-            .attachments([
-                new builder.HeroCard(session)
-                .title("Space Needle")
-                .subtitle("The Space Needle is an observation tower in Seattle, Washington, a landmark of the Pacific Northwest, and an icon of Seattle.")
-                .images([
-                    builder.CardImage.create(session, "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Seattlenighttimequeenanne.jpg/320px-Seattlenighttimequeenanne.jpg")
-                ])
-                .buttons([
-                    builder.CardAction.dialogAction(session, "weather", "Seattle, WA", "Current Weather")
-                ])
+function getItems(session) {
+    var items = [];
+    console.log(server.url + "/assets/img/ham.png");
+    for (var i = 0; i < inventory.length; i++) {
+        var item = new builder.HeroCard(session)
+            .title(inventory[i].name)
+            .subtitle(inventory[i].desc)
+            .images([
+                builder.CardImage.create(session, server.url + "/assets/img/" + inventory[i].image)
+                .tap(function() {
+                    console.log("Hello");
+                    mBill.pay(100, function(url) {
+                        builder.CardAction.openUrl(session, url);
+                    })
+                }())
             ]);
-        session.send(msg);
-
-        session.endDialog("The 'Current Weather' button on the card above can be pressed at any time regardless of where the user is in the conversation with the bot. The bot can even show the weather after the conversation has ended.");
+        items.push(item);
     }
-]);
-
-// Create a dialog and bind it to a global action
-bot.dialog('/weather', [
-    function(session, args) {
-        session.endDialog("The weather in %s is 71 degrees and raining.", args.data);
-    }
-]);
-bot.beginDialogAction('weather', '/weather'); // <-- no 'matches' option means this can only be triggered by a button.
+    return items;
+}
