@@ -93,7 +93,8 @@ bot.dialog('/', [
     },
     function(session,results){
         if(results.response){
-            session.send(results.response);
+            session.send("hey");
+            console.debug(results.response);
         } else{
             session.endDialog("Bye bye");
         }
